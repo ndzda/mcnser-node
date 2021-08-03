@@ -1,0 +1,14 @@
+{
+    "?port": "在本机上开启的端口",
+    "port": 25565,
+
+    "?remoteIP": "连接到的服务器地址",
+    "remoteIP": "127.0.0.1",
+    "?remotePort": "连接到的服务器端口",
+    "remotePort": 25566,
+
+    "?modifyP_HS": "修改handshake数据包",
+    "modifyP_HS": true,
+    "?modifyIp": "将数据包ip修改为 留空将与remoteIP一致",
+    "modifyIp": ""
+}
