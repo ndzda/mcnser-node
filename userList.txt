@@ -1,0 +1,2 @@
+mcnser user list
+mcnser user list end

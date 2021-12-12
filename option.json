@@ -3,12 +3,21 @@
     "port": 25565,
 
     "?remoteIP": "连接到的服务器地址",
-    "remoteIP": "127.0.0.1",
+    "remoteIP": "china.syuu.net",
     "?remotePort": "连接到的服务器端口",
-    "remotePort": 25566,
+    "remotePort": 25565,
 
-    "?modifyP_HS": "修改handshake数据包",
-    "modifyP_HS": true,
-    "?modifyIp": "将数据包ip修改为 留空将与remoteIP一致",
-    "modifyIp": ""
+
+    "?modifyIp_HS": "修改handshake数据包",
+    "modifyIp_HS": true,
+    "?modifyIp": "数据包ip修改(留空将与remoteIP一致)",
+    "modifyIp": "mc.hypixel.net",
+
+    "?modifyP_MOTD": "修改MOTD",
+    "modifyP_MOTD": true,
+    "?modifyMOTD": "修改MOTD为(可以使用 § 修改颜色 ${time}显示剩余时间)",
+    "modifyMOTD": "测试试\n剩余在线时长: ${time}",
+
+    "?CDKey_mod": "激活码模式(若关闭则允许任意连接)",
+    "CDKey_mod": true
 }

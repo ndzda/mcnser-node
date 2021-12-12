@@ -12,7 +12,7 @@ export class mcSocket
             soc.write = function (data)
             {
                 console.log("debug ", data);
-                sendFunc.call(soc, data)
+                sendFunc.call(soc, data);
             };
         }
     }
@@ -99,11 +99,9 @@ export class mcSocket
                 case "v":
                     this.pVInt(v[num++]);
                     break;
-                case "l":
-                    this.pVInt(v[num].length);
-                    break;
                 case "s":
-                    this.pStr(v[num++]);
+                    this.pStr(v[num], (i > 0 && t[i - 1] == "l"));
+                    num++;
                     break;
                 case "2":
                     this.pShort(v[num++]);
