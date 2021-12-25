@@ -57,6 +57,7 @@ export function createCont(cliObj, clientId)
         server = new mcSocket(ret.o = createConnection(opt.remotePort, opt.remoteIP, function ()
         {
             console.log("[=]onCon: " + clientId);
+            ret.o.setNoDelay(true);
             if (opt.modifyIp_HS)
             {
                 let ind_ipSur = p_handshaking[2].indexOf("\0");
@@ -108,7 +109,7 @@ export function createCont(cliObj, clientId)
             {
                 var user_time = userMap.get(ret.CDK);
                 if (user_time > 0)
-                    MOTD_Time = Math.floor(user_time / 60) + "时" + (Math.floor(user_time / 60) % 60) + "分" + (user_time % 60) + "秒";
+                    MOTD_Time = Math.floor(user_time / (60 * 60)) + "时" + (Math.floor(user_time / 60) % 60) + "分" + (user_time % 60) + "秒";
                 else if (user_time <= 0)
                     MOTD_Time = "没有剩余时长啦";
             }

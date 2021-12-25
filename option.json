@@ -3,7 +3,7 @@
     "port": 25565,
 
     "?remoteIP": "连接到的服务器地址",
-    "remoteIP": "china.syuu.net",
+    "remoteIP": "mc.hypixel.net",
     "?remotePort": "连接到的服务器端口",
     "remotePort": 25565,
 
@@ -11,7 +11,7 @@
     "?modifyIp_HS": "修改handshake数据包",
     "modifyIp_HS": true,
     "?modifyIp": "数据包ip修改(留空将与remoteIP一致)",
-    "modifyIp": "mc.hypixel.net",
+    "modifyIp": "",
 
     "?modifyP_MOTD": "修改MOTD",
     "modifyP_MOTD": true,
