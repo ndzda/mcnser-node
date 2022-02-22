@@ -32,7 +32,11 @@ export function createSer(callBack, port)
         client.on("data", function (data)
         {
             //console.log("[*]dataFC(" + clientId + "): ", data);
-            if (toServer.next(data).done)
+            if (context.thr)
+            {
+                context.so.write(data);
+            }
+            else if (toServer.next(data).done)
             {
                 console.log("[-]kick: " + clientId);
                 client.destroy();

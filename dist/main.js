@@ -73,7 +73,11 @@ function createSer(callBack, port)
         client.on("data", function (data)
         {
             //console.log("[*]dataFC(" + clientId + "): ", data);
-            if (toServer.next(data).done)
+            if (context.thr)
+            {
+                context.so.write(data);
+            }
+            else if (toServer.next(data).done)
             {
                 console.log("[-]kick: " + clientId);
                 client.destroy();
@@ -356,11 +360,14 @@ function createCont(cliObj, clientId)
             toServer.return();
             toClient.return();
         },
+        thr: false,
+        so: null,
         CDK: "",
         startTime: 0,
         state: 0,
         user: false
     };
+    var toClientThr = false;
     var nowModifyMOTD = false;
     function* toServerF()
     {
@@ -401,7 +408,10 @@ function createCont(cliObj, clientId)
             server.s.on("data", function (data)
             {
                 //console.log("[*]dataFS(" + clientId + "): ", data);
-                toClient.next(data);
+                if (toClientThr)
+                    cliObj.write(data);
+                else
+                    toClient.next(data);
             });
             server.writeP("v v ls 2 v", p_handshaking);
             toServer.next();
@@ -421,6 +431,8 @@ function createCont(cliObj, clientId)
 
         yield* CliBuffer.wait();
         server.s.write(yield* CliBuffer.readAllBytes());
+        ret.so = server.s;
+        ret.thr = true;
         while (1)
             server.s.write(yield);
     }
@@ -459,6 +471,7 @@ function createCont(cliObj, clientId)
             client.sendA();
             cliObj.write(b);
         }
+        toClientThr = true;
         while (1)
             cliObj.write(yield);
     }
