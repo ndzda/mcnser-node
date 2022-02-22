@@ -16,7 +16,7 @@
     "?modifyP_MOTD": "修改MOTD",
     "modifyP_MOTD": false,
     "?modifyMOTD": "修改MOTD为(可以使用 § 修改颜色 ${time}显示剩余时间)",
-    "modifyMOTD": "测试试\n剩余在线时长: ${time}",
+    "modifyMOTD": "mcnser服务测试\n剩余在线时长: ${time}",
 
     "?CDKey_mod": "激活码模式(若关闭则允许任意连接)",
     "CDKey_mod": false
