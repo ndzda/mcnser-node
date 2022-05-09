@@ -6,37 +6,42 @@ const userMap = new Map();
 var saveTime = 0;
 function saveList()
 {
-    var str = "mcnser user list\n";
+    var ulObj = [];
     userMap.forEach((o, i) =>
     {
-        if (o > 0)
-            str += i + " " + o + "\n";
+        if (cmpStr)
+            ulObj.push([i, o.t, o.ip, o.cmpStr]);
+        else if (o > 0)
+            ulObj.push([i, o.t, o.ip]);
     });
-    str += "mcnser user list end";
-    saveTime = Date.now();
-    writeFileSync("./userList.txt", str, { encoding: "utf-8" });
+    writeFileSync("./userList.json", JSON.stringify(ulObj), { encoding: "utf-8" });
 }
 
 function readList()
 {
-    var str = readFileSync("./userList.txt", { encoding: "utf-8" }).replace("\r", "");
-    var list = str.split("\n");
-    if (list[0] != "mcnser user list" || list[list.length - 1] != "mcnser user list end")
+    var ulObj = JSON.parse(readFileSync("./userList.json", { encoding: "utf-8" }));
+    if (Array.isArray(ulObj))
+    {
+        ulObj.forEach((o) =>
+        {
+            userMap.set(o[0], {
+                t: o[1],
+                ip: o[2],
+                cmp: (o[3] ? new Function("response", o[3]) : null),
+                cmpStr: o[3]
+            });
+        });
+    }
+    else
     {
         console.log("[Error] Reading List Failed");
         return;
     }
-    list.slice(1, -1);
-    list.forEach((o, i) =>
-    {
-        var tmp = o.split(" ");
-        userMap.set(tmp[0], parseInt(tmp[1]));
-    });
 }
 
 readList();
 
-watch("./userList.txt", () =>
+watch("./userList.json", () =>
 {
     if (Math.abs(Date.now() - saveTime) > 900)
         setTimeout(readList, 100);
@@ -55,9 +60,9 @@ function createSer(callBack, port)
         client.on("end", function ()
         {
             console.log("[-]client disconnect: " + clientId);
-            if (context.user && context.state == 2)
+            if (context.user && context.state == 2 && context.CDK)
             {
-                userMap.set(context.CDK, userMap.get(context.CDK) - Math.round((Date.now() - context.startTime) / 1000));
+                userMap.get(context.CDK).t = (userMap.get(context.CDK).t - Math.round((Date.now() - context.startTime) / 1000));
                 saveList();
             }
             if (context.o)
@@ -373,22 +378,38 @@ function createCont(cliObj, clientId)
     {
         yield* CliBuffer.gVInt();
         var p_handshaking = yield* CliBuffer.getT("v v ls 2 v");
+        yield* CliBuffer.gVInt();
+        var p_login = yield* CliBuffer.getT("ls");
+        var player_name = p_login[0];
         if (opt.CDKey_mod)
         {
-            var o_ip = p_handshaking[2];
-            var ind_ip = o_ip.indexOf(".");
-            var CDK = o_ip.slice(0, ind_ip);
-            if (!((/[0-9a-f]+/).test(CDK)))
-                return;
-            ret.CDK = CDK;
-            ret.startTime = Date.now();
-            ret.state = p_handshaking[4];
-            if (ret.state == 2)
+            if (userMap.has(player_name) && userMap.get(player_name).cmp)
             {
-                if (userMap.has(CDK) && userMap.get(CDK) > 0)
-                    ret.user = true;
-                else
+                if (ret.state == 2)
+                {
+                    if (userMap.get(player_name).cmp(player_name))
+                        ret.user = true;
+                    else
+                        return;
+                }
+            }
+            else if (userMap.has(CDK) && !userMap.get(player_name).cmp)
+            {
+                var o_ip = p_handshaking[2];
+                var ind_ip = o_ip.indexOf(".");
+                var CDK = o_ip.slice(0, ind_ip);
+                if (!((/[0-9a-f]+/).test(CDK)))
                     return;
+                ret.CDK = CDK;
+                ret.startTime = Date.now();
+                ret.state = p_handshaking[4];
+                if (ret.state == 2)
+                {
+                    if (userMap.get(CDK).t > 0)
+                        ret.user = true;
+                    else
+                        return;
+                }
             }
         }
 
@@ -450,7 +471,7 @@ function createCont(cliObj, clientId)
             var MOTD_Time = "";
             if (userMap.has(ret.CDK))
             {
-                var user_time = userMap.get(ret.CDK);
+                var user_time = userMap.get(ret.CDK).t;
                 if (user_time > 0)
                     MOTD_Time = Math.floor(user_time / (60 * 60)) + "时" + (Math.floor(user_time / 60) % 60) + "分" + (user_time % 60) + "秒";
                 else if (user_time <= 0)

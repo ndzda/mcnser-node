@@ -4,21 +4,29 @@ export class mcBuffer
     b = null;
     p = 0;
     s = 0;
+    resolve = null;
     constructor()
     {
     }
-    *readByte()// 读一byte
+    async wait4read()
+    {
+        return new Promise((resolve, reject) =>
+        {
+            this.resolve = resolve;
+        });
+    }
+    async readByte() // 读一byte
     {
         if (this.p < this.s)
             return this.b[this.p++];
         else
         {
-            this.s = (this.b = yield).length;
+            this.s = (this.b = await wait4read()).length;
             this.p = 1;
             return this.b[0];
         }
     }
-    *readBytes(len)
+    async readBytes(len)
     {
         var ret = new Uint8Array(len);
         var p = 0;
@@ -28,14 +36,14 @@ export class mcBuffer
             p += this.s - this.p;
             len -= this.s - this.p;
             // this.p = this.s;
-            this.s = (this.b = yield).length;
+            this.s = (this.b = await wait4read()).length;
             this.p = 0;
         }
         ret.set(this.b.subarray(this.p, this.p + len), p);
         this.p += len;
         return ret;
     }
-    *readAllBytes()
+    async readAllBytes()
     {
         if (this.p < this.s)
         {
@@ -45,14 +53,14 @@ export class mcBuffer
         }
         else
         {
-            this.p = this.s = (this.b = yield).length;
+            this.p = this.s = (this.b = await wait4read()).length;
             return this.b;
         }
     }
-    *wait()
+    async wait()
     {
         var y = null;
-        while (y = yield)
+        while (y = await wait4read())
         {
             if (this.p < this.s)
             {
@@ -70,32 +78,32 @@ export class mcBuffer
     }
 
 
-    *gVInt()// 读入变长型整数
+    async gVInt()// 读入变长型整数
     {
         var b = 0;// 当前byte
         var i = 0;// 数值
         var len = 0;// 长度
         do
         {
-            i |= ((b = yield* this.readByte()) & 127) << (7 * len);
+            i |= ((b = await this.readByte()) & 127) << (7 * len);
             if ((++len) > 10)
                 throw "VInt is too big!";
         } while (b & 128);
         return i;
     }
 
-    *gShort()// 读两个byte作为short
+    async gShort()// 读两个byte作为short
     {
-        var high_b = yield* this.readByte();
-        return (high_b << 8) | (yield* this.readByte());
+        var high_b = await this.readByte();
+        return (high_b << 8) | (await this.readByte());
     }
 
-    *gStr(len)// 读字符串
+    async gStr(len)// 读字符串
     {
-        return (new TextDecoder("utf-8")).decode(yield* this.readBytes(len));
+        return (new TextDecoder("utf-8")).decode(await this.readBytes(len));
     }
 
-    *getT(t)
+    async getT(t)
     {
         var ret = [];
         var len = 0;
@@ -105,16 +113,16 @@ export class mcBuffer
                 case " ":
                     break;
                 case "v":
-                    ret.push(yield* this.gVInt());
+                    ret.push(await this.gVInt());
                     break;
                 case "l":
-                    len = yield* this.gVInt();
+                    len = await this.gVInt();
                     break;
                 case "s":
-                    ret.push(yield* this.gStr(len));
+                    ret.push(await this.gStr(len));
                     break;
                 case "2":
-                    ret.push(yield* this.gShort());
+                    ret.push(await this.gShort());
                     break;
                 default:
             }

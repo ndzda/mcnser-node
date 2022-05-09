@@ -4,7 +4,8 @@ import { createConnection } from "net";
 import { mcSocket } from "./mcSock.js";
 import { userMap } from "./userList.js";
 
-export var opt = JSON.parse(readFileSync("./option.json"));
+
+
 if (!opt.modifyIp)
     opt.modifyIp = opt.remoteIP;
 var MOTD_cache = null;
@@ -34,26 +35,42 @@ export function createCont(cliObj, clientId)
     };
     var toClientThr = false;
     var nowModifyMOTD = false;
-    function* toServerF()
+    async function toServerF()
     {
         var p_len = yield* CliBuffer.gVInt();
         var p_handshaking = yield* CliBuffer.getT("v v ls 2 v");
+        var p_len_login = yield* CliBuffer.gVInt();
+        var p_login = yield* CliBuffer.getT("ls");
+        var player_name = p_login[0];
         if (opt.CDKey_mod)
         {
-            var o_ip = p_handshaking[2];
-            var ind_ip = o_ip.indexOf(".");
-            var CDK = o_ip.slice(0, ind_ip);
-            if (!((/[0-9a-f]+/).test(CDK)))
-                return;
-            ret.CDK = CDK;
-            ret.startTime = Date.now();
-            ret.state = p_handshaking[4];
-            if (ret.state == 2)
+            if (userMap.has(player_name) && userMap.get(player_name).cmp)
             {
-                if (userMap.has(CDK) && userMap.get(CDK) > 0)
-                    ret.user = true;
-                else
+                if (ret.state == 2)
+                {
+                    if (userMap.get(player_name).cmp(yield (player_name)))
+                        ret.user = true;
+                    else
+                        return;
+                }
+            }
+            else if (userMap.has(CDK) && !userMap.get(player_name).cmp)
+            {
+                var o_ip = p_handshaking[2];
+                var ind_ip = o_ip.indexOf(".");
+                var CDK = o_ip.slice(0, ind_ip);
+                if (!((/[0-9a-f]+/).test(CDK)))
                     return;
+                ret.CDK = CDK;
+                ret.startTime = Date.now();
+                ret.state = p_handshaking[4];
+                if (ret.state == 2)
+                {
+                    if (userMap.get(CDK).t > 0)
+                        ret.user = true;
+                    else
+                        return;
+                }
             }
         }
 
@@ -101,7 +118,7 @@ export function createCont(cliObj, clientId)
         while (1)
             server.s.write(yield);
     }
-    function* toClientF()
+    async function toClientF()
     {
         var len = yield* SerBuffer.gVInt();
         if (nowModifyMOTD)
@@ -115,7 +132,7 @@ export function createCont(cliObj, clientId)
             var MOTD_Time = "";
             if (userMap.has(ret.CDK))
             {
-                var user_time = userMap.get(ret.CDK);
+                var user_time = userMap.get(ret.CDK).t;
                 if (user_time > 0)
                     MOTD_Time = Math.floor(user_time / (60 * 60)) + "时" + (Math.floor(user_time / 60) % 60) + "分" + (user_time % 60) + "秒";
                 else if (user_time <= 0)
@@ -140,7 +157,7 @@ export function createCont(cliObj, clientId)
         while (1)
             cliObj.write(yield);
     }
-    toServer.next();
-    toClient.next();
+    toServer();
+    toClient();
     return ret;
 }
