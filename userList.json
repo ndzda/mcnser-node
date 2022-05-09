@@ -3,7 +3,7 @@
         "ndzda",
         0,
         "",
-        "https://",
+        "return 'https://baidu.com';",
         "return true;"
     ]
 ]
