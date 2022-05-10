@@ -1,41 +1,58 @@
 import { readFileSync, writeFileSync, watch } from "fs";
 
+/**
+ * @type {Map<string,{
+ *  t : string,
+ *  ip : string,
+ *  cmpUrlStr : string,
+ *  cmpUrl : Function,
+ *  cmpStr : string,
+ *  cmp : Function
+ * }>}
+ */
 export const userMap = new Map();
 
 var saveTime = 0;
 export function saveList()
 {
-    var str = "mcnser user list\n";
+    var ulObj = [];
     userMap.forEach((o, i) =>
     {
-        if (o > 0)
-            str += i + " " + o + "\n";
+        if (cmpStr)
+            ulObj.push([i, o.t, o.ip, cmpUrl, o.cmpStr]);
+        else if (o > 0)
+            ulObj.push([i, o.t, o.ip]);
     });
-    str += "mcnser user list end";
-    saveTime = Date.now();
-    writeFileSync("./userList.txt", str, { encoding: "utf-8" });
+    writeFileSync("./userList.json", JSON.stringify(ulObj), { encoding: "utf-8" });
 }
 
 export function readList()
 {
-    var str = readFileSync("./userList.txt", { encoding: "utf-8" }).replace("\r", "");
-    var list = str.split("\n");
-    if (list[0] != "mcnser user list" || list[list.length - 1] != "mcnser user list end")
+    var ulObj = JSON.parse(readFileSync("./userList.json", { encoding: "utf-8" }));
+    if (Array.isArray(ulObj))
+    {
+        ulObj.forEach((o) =>
+        {
+            userMap.set(o[0], {
+                t: o[1],
+                ip: o[2],
+                cmpUrlStr: o[3],
+                cmpUrl: (o[3] ? new Function("player_name", o[3]) : null),
+                cmpStr: o[4],
+                cmp: (o[4] ? new Function("player_name", o[4]) : null)
+            });
+        });
+    }
+    else
     {
         console.log("[Error] Reading List Failed");
         return;
     }
-    list.slice(1, -1);
-    list.forEach((o, i) =>
-    {
-        var tmp = o.split(" ");
-        userMap.set(tmp[0], parseInt(tmp[1]));
-    });
 }
 
 readList();
 
-watch("./userList.txt", () =>
+watch("./userList.json", () =>
 {
     if (Math.abs(Date.now() - saveTime) > 900)
         setTimeout(readList, 100);

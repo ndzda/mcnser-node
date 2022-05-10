@@ -2,6 +2,7 @@ import { createConnection } from "net";
 import { mcProt } from "./mcProt.js";
 import { mcSocket } from "./mcSock.js";
 import { option } from "./option.js";
+import { userMap } from "./userMap.js";
 
 var MOTD_cache = null;
 
@@ -43,7 +44,15 @@ export class mcClient
         this.sn = sn;
         this.clientO = client;
         this.CliSock = new mcSocket(client);
-        this.toServer();
+        this.toClient();
+        (async () =>
+        {
+            await this.toServer();
+            console.log("[-]kick: " + this.sn);
+            this.clientO.destroy();
+            if (this.serverO)
+                this.serverO.destroy();
+        })();
     }
 
     /** 客户端到服务器 */

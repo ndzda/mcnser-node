@@ -15,34 +15,38 @@ createServer(function (client)
     console.log("[+]client connected: " + clientSN);
     client.setNoDelay(true);
 
-    client.on("end", function ()
+    client.on("end", () =>
     {
         console.log("[-]client disconnect: " + clientSN);
         if (context.SerSock)
-                context.SerSock.s.destroy();
+            context.SerSock.s.destroy();
     });
 
-    client.on("error", function ()
+    client.on("error", () =>
     {
         console.log("[x]errFC: " + clientSN);
         client.destroy();
         if (context.SerSock)
-                context.SerSock.s.destroy();
+            context.SerSock.s.destroy();
     });
 
-    client.on("data", function (data)
+    client.on("data", (data) =>
     {
         // console.log("[*]dataFC(" + clientId + "): ", data);
         if (context.toServerThr)
         {
             context.SerSock.s.write(data);
         }
-        else if (false)
+        else
         {
-            console.log("[-]kick: " + clientSN);
-            client.destroy();
-            if (context.SerSock)
-                context.SerSock.s.destroy();
+            context.CliProt.resolve(data);
+            if (false)
+            {
+                console.log("[-]kick: " + clientSN);
+                client.destroy();
+                if (context.SerSock)
+                    context.SerSock.s.destroy();
+            }
         }
     });
 

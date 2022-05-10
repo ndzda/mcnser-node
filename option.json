@@ -3,7 +3,7 @@
     "port": 25565,
 
     "?remoteIP": "连接到的服务器地址",
-    "remoteIP": "mc.hypixel.net",
+    "remoteIP": "china.syuu.net",
     "?remotePort": "连接到的服务器端口",
     "remotePort": 25565,
 
