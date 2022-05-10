@@ -60,7 +60,7 @@ export class mcProt
             return this.b;
         }
     }
-    /** 等待直到缓冲区有数据 */
+    /** 等待直到出现空数据 */
     async wait()
     {
         var y = null;
@@ -89,7 +89,7 @@ export class mcProt
         var len = 0;// 长度
         do
         {
-            i |= ((b = yield * this.readByte()) & 127) << (7 * len);
+            i |= ((b = await this.readByte()) & 127) << (7 * len);
             if ((++len) > 10)
                 throw "VInt is too big!";
         } while (b & 128);
@@ -98,13 +98,13 @@ export class mcProt
 
     async gShort()// 读两个byte作为short
     {
-        var high_b = yield * this.readByte();
-        return (high_b << 8) | (yield * this.readByte());
+        var high_b = await this.readByte();
+        return (high_b << 8) | (await this.readByte());
     }
 
     async gStr(len)// 读字符串
     {
-        return (new TextDecoder("utf-8")).decode(yield * this.readBytes(len));
+        return (new TextDecoder("utf-8")).decode(await this.readBytes(len));
     }
 
     /**
@@ -122,16 +122,16 @@ export class mcProt
                 case " ":
                     break;
                 case "v":
-                    ret.push(yield * this.gVInt());
+                    ret.push(await this.gVInt());
                     break;
                 case "l":
-                    len = yield * this.gVInt();
+                    len = await this.gVInt();
                     break;
                 case "s":
-                    ret.push(yield * this.gStr(len));
+                    ret.push(await this.gStr(len));
                     break;
                 case "2":
-                    ret.push(yield * this.gShort());
+                    ret.push(await this.gShort());
                     break;
                 default:
             }

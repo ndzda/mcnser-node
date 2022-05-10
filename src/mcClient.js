@@ -8,19 +8,30 @@ var MOTD_cache = null;
 export class mcClient
 {
     /** @type {import("net").Socket} */
-    client = null;
+    clientO = null;
+    /** @type {import("net").Socket} */
+    serverO = null;
     sn = -1;
     /** @type {mcSocket} */
     CliSock = null;
     /** @type {mcSocket} */
     SerSock = null;
     /** @type {mcProt} */
-    CliProt = null;
+    CliProt = new mcProt();
     /** @type {mcProt} */
-    SerProt = null;
+    SerProt = new mcProt();
     toClientThr = false;
     toServerThr = false;
+    nowModifyMOTD = false;
 
+    /**
+     * @type {{
+     *  CDK ?: string,
+     *  startTime ?: number,
+     *  state ?: number,
+     *  user ?: boolean
+     * }}
+     */
     meta = {};
 
     /**
@@ -29,10 +40,13 @@ export class mcClient
      */
     constructor(client, sn)
     {
-        this.client = client;
         this.sn = sn;
+        this.clientO = client;
+        this.CliSock = new mcSocket(client);
+        this.toServer();
     }
 
+    /** 客户端到服务器 */
     async toServer()
     {
         var p_len = await this.CliProt.gVInt();
@@ -56,10 +70,10 @@ export class mcClient
             }
         }
 
-        this.SerSock = new mcSocket(createConnection(option.remotePort, option.remoteIP, () =>
+        this.SerSock = new mcSocket(this.serverO = createConnection(option.remotePort, option.remoteIP, () =>
         {
             console.log("[=]onCon: " + this.sn);
-            this.meta.o.setNoDelay(true);
+            this.serverO.setNoDelay(true);
             if (option.modifyIp_HS)
             {
                 let ind_ipSur = p_handshaking[2].indexOf("\0");
@@ -68,43 +82,43 @@ export class mcClient
             }
             //console.log(p_handshaking[2]);
             if (p_handshaking[4] == 1 && option.modifyP_MOTD)
-                nowModifyMOTD = true;
-            this.SerSock.s.on("data", function (data)
+                this.nowModifyMOTD = true;
+            this.serverO.on("data", (data) =>
             {
                 //console.log("[*]dataFS(" + this.sn + "): ", data);
                 if (this.toClientThr)
-                    this.CliSock.s.write(data);
+                    this.clientO.write(data);
                 else
-                    toClient.next(data);
+                    this.SerProt.resolve(data);
             });
             this.SerSock.writeP("v v ls 2 v", p_handshaking);
-            toServer.next();
+            this.CliProt.resolve();
             //server.writeP("v", [0]);
         }));
 
-        this.SerSock.s.on("error", () =>
+        this.serverO.on("error", () =>
         {
             console.log("[x]errFS: " + this.sn);
-            this.SerSock.s.destroy();
-            this.CliSock.s.destroy();
+            this.serverO.destroy();
+            this.clientO.destroy();
         });
-        this.SerSock.s.on("end", function ()
+        this.serverO.on("end", () =>
         {
-            this.CliSock.s.destroy();
+            this.clientO.destroy();
         });
 
         await this.CliProt.wait();
-        this.SerSock.s.write(await this.CliProt.readAllBytes());
-        this.meta.so = this.SerSock.s;
-        this.meta.thr = true;
+        this.serverO.write(await this.CliProt.readAllBytes());
+        this.toServerThr = true;
         while (1)
-            this.SerSock.s.write(await);
+            this.serverO.write(await this.CliProt.waitP());
     }
 
+    /** 服务器到客户端 */
     async toClient()
     {
         var len = await this.SerProt.gVInt();
-        if (option.modifyIp_HS)
+        if (this.nowModifyMOTD)
         {
             var pack = await this.SerProt.getT("v ls");
             if (!MOTD_cache)
@@ -134,10 +148,10 @@ export class mcClient
             // logUint8(b);
             this.CliSock.pushT("v", [len]);
             this.CliSock.sendA();
-            this.CliSock.s.write(b);
+            this.clientO.write(b);
         }
         this.toClientThr = true;
         while (1)
-            this.CliSock.write(await);
+            this.clientO.write(await this.SerProt.waitP());
     }
 }
