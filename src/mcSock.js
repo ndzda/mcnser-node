@@ -1,14 +1,20 @@
 export class mcSocket
 {
+    /** @type {import("net").Socket} */
     s = null;
     a = [];
     l = 0;
+    /**
+     * @param {import("net").Socket} soc
+     * @param {boolean} [debugMode]
+     */
     constructor(soc, debugMode)
     {
         this.s = soc;
         if (debugMode)
         {
             var sendFunc = soc.write;
+            // @ts-ignore
             soc.write = function (data)
             {
                 console.log("debug ", data);
@@ -17,16 +23,19 @@ export class mcSocket
         }
     }
 
+    /** 压入一字节数据 */
     pByte(b)
     {
         this.l++;
         this.a.push(b);
     }
+    /** 压入一段数据 */
     pBuffer(b)
     {
         this.l += b.length;
         this.a.push(b);
     }
+    /** 获取所有缓存的包 */
     getA()
     {
         var b = new Uint8Array(this.l);
@@ -45,12 +54,13 @@ export class mcSocket
         this.l = 0;
         return b;
     }
+    /** 发送所有缓存的包 */
     sendA()
     {
         this.s.write(this.getA());
     }
 
-    pVInt(value)// 写入一个变长形int
+    pVInt(value)// 压入一个变长形int
     {
         do
         {
@@ -62,32 +72,33 @@ export class mcSocket
         } while (value != 0);
     }
 
-    pStr(str, withLength)// 写入一个String(是否写入其长度)
+    pStr(str, withLength)// 压入一个String(是否写入其长度)
     {
-        var b = (new TextEncoder("utf-8")).encode(str);
+        var b = (new TextEncoder()).encode(str);
         if (withLength)
             this.pVInt(b.length);
         this.pBuffer(b);
     }
 
-    pShort(n)// 写入一个short整数
+    pShort(n)// 压入一个short整数
     {
         this.pByte(n >>> 8);
         this.pByte(n & 0xff);
     }
 
-    pInt(n)// 写入一个int整数
+    pInt(n)// 压入一个int整数
     {
         this.pShort(n >>> 16);
         this.pShort(n & 0xffff);
     }
 
-    pLong(n)// 写入一个long整数
+    pLong(n)// 压入一个long整数
     {
         this.pInt(n >>> 32);
         this.pInt(n & 0xffffffff);
     }
 
+    /** 压包 */
     pushT(t, v)
     {
         var num = 0;
@@ -115,6 +126,7 @@ export class mcSocket
                 default:
             }
     }
+    /** 发包 */
     writeP(t, v)
     {
         this.pushT(t, v);
