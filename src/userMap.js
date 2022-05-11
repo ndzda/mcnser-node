@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, watch } from "fs";
 
 /**
  * @type {Map<string,{
- *  t : string,
+ *  t : number,
  *  ip : string,
  *  cmpUrlStr : string,
  *  cmpUrl : Function,
@@ -18,9 +18,9 @@ export function saveList()
     var ulObj = [];
     userMap.forEach((o, i) =>
     {
-        if (cmpStr)
-            ulObj.push([i, o.t, o.ip, cmpUrl, o.cmpStr]);
-        else if (o > 0)
+        if (o.cmpStr)
+            ulObj.push([i, o.t, o.ip, o.cmpUrl, o.cmpStr]);
+        else if (o.t > 0)
             ulObj.push([i, o.t, o.ip]);
     });
     writeFileSync("./userList.json", JSON.stringify(ulObj), { encoding: "utf-8" });

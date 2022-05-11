@@ -2,6 +2,7 @@ import { createConnection } from "net";
 import { mcProt } from "./mcProt.js";
 import { mcSocket } from "./mcSock.js";
 import { option } from "./option.js";
+import { userCmp } from "./userCmp.js";
 import { userMap } from "./userMap.js";
 
 var MOTD_cache = null;
@@ -58,8 +59,9 @@ export class mcClient
     /** 客户端到服务器 */
     async toServer()
     {
-        var p_len = await this.CliProt.gVInt();
+        var p_handshaking_len = await this.CliProt.gVInt();
         var p_handshaking = await this.CliProt.getT("v v ls 2 v");
+        this.meta.state = p_handshaking[4];
         if (option.CDKey_mod)
         {
             var o_ip = p_handshaking[2];
@@ -69,7 +71,6 @@ export class mcClient
                 return;
             this.meta.CDK = CDK;
             this.meta.startTime = Date.now();
-            this.meta.state = p_handshaking[4];
             if (this.meta.state == 2)
             {
                 //if (userMap.has(CDK) && userMap.get(CDK) > 0)
@@ -77,6 +78,14 @@ export class mcClient
                 //else
                 //    return;
             }
+        }
+        var p_name_len, p_name;
+        if (this.meta.state == 2)
+        {
+            p_name_len = await this.CliProt.gVInt();
+            p_name = await this.CliProt.getT("v ls");
+            if(!(await userCmp(p_name[1])))
+                return;
         }
 
         this.SerSock = new mcSocket(this.serverO = createConnection(option.remotePort, option.remoteIP, () =>
@@ -101,6 +110,8 @@ export class mcClient
                     this.SerProt.resolve(data);
             });
             this.SerSock.writeP("v v ls 2 v", p_handshaking);
+            if (this.meta.state == 2)
+                this.SerSock.writeP("v ls", p_name);
             this.CliProt.resolve();
             //server.writeP("v", [0]);
         }));
@@ -138,7 +149,7 @@ export class mcClient
             var MOTD_Time = "";
             if (userMap.has(this.meta.CDK))
             {
-                var user_time = userMap.get(this.meta.CDK);
+                var user_time = userMap.get(this.meta.CDK).t;
                 if (user_time > 0)
                     MOTD_Time = Math.floor(user_time / (60 * 60)) + "时" + (Math.floor(user_time / 60) % 60) + "分" + (user_time % 60) + "秒";
                 else if (user_time <= 0)

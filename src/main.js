@@ -40,13 +40,6 @@ createServer(function (client)
         else
         {
             context.CliProt.resolve(data);
-            if (false)
-            {
-                console.log("[-]kick: " + clientSN);
-                client.destroy();
-                if (context.SerSock)
-                    context.SerSock.s.destroy();
-            }
         }
     });
 
