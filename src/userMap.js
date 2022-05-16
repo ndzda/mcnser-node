@@ -23,6 +23,7 @@ export function saveList()
         else if (o.t > 0)
             ulObj.push([i, o.t, o.ip]);
     });
+    saveTime = Date.now();
     writeFileSync("./userList.json", JSON.stringify(ulObj), { encoding: "utf-8" });
 }
 

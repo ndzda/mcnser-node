@@ -73,10 +73,10 @@ export class mcClient
             this.meta.startTime = Date.now();
             if (this.meta.state == 2)
             {
-                //if (userMap.has(CDK) && userMap.get(CDK) > 0)
-                this.meta.user = true;
-                //else
-                //    return;
+                if (userMap.has(CDK) && userMap.get(CDK).t > 0)
+                    this.meta.user = true;
+                else
+                    return;
             }
         }
         var p_name_len, p_name;
@@ -84,7 +84,7 @@ export class mcClient
         {
             p_name_len = await this.CliProt.gVInt();
             p_name = await this.CliProt.getT("v ls");
-            if(!(await userCmp(p_name[1])))
+            if (!(await userCmp(p_name[1])))
                 return;
         }
 
