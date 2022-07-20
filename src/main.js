@@ -1,6 +1,7 @@
 import { createServer } from "net";
 import { mcClient } from "./mcClient.js";
 import { option } from "./option.js";
+import { saveList, userMap } from "./userMap.js";
 
 /** 客户端计数 */
 var clientCount = 0;
@@ -20,6 +21,11 @@ createServer(function (client)
         console.log("[-]client disconnect: " + clientSN);
         if (context.SerSock)
             context.SerSock.s.destroy();
+        if (context.meta.state == 2 && context.meta.CDK)
+        {
+            userMap.get(context.meta.CDK).t -= Math.floor((Date.now() - context.meta.startTime) / 1000);
+            saveList();
+        }
     });
 
     client.on("error", () =>

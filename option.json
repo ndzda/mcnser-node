@@ -3,7 +3,7 @@
     "port": 25565,
 
     "?remoteIP": "连接到的服务器地址",
-    "remoteIP": "mc.hypixel.net",
+    "remoteIP": "syuu.net",
     "?remotePort": "连接到的服务器端口",
     "remotePort": 25565,
 
@@ -14,12 +14,12 @@
     "modifyIp": "",
 
     "?modifyP_MOTD": "修改MOTD",
-    "modifyP_MOTD": false,
+    "modifyP_MOTD": true,
     "?modifyMOTD": "修改MOTD为(可以使用 § 修改颜色 ${time}显示剩余时间)",
     "modifyMOTD": "mcnser服务测试\n剩余在线时长: ${time}",
 
     "?CDKey_mod": "激活码模式(userList.json)",
-    "CDKey_mod": false,
+    "CDKey_mod": true,
     "?userCmp_mod": "自定义判定模式(userCmp.js)",
     "userCmp_mod": false
 }
